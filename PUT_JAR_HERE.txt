@@ -1,0 +1,105 @@
+═════════════════════════════════════════════════════════════
+  ⚠️  你只需要做一件事: 放入 gradle-wrapper.jar
+═════════════════════════════════════════════════════════════
+
+这个文件已经在 zip 里预留了位置和说明，但 jar 本身需要你手动放。
+
+─────────────────────────────────────────────────────────────────
+📱 手机端操作 (MT 管理器 + Termux)
+─────────────────────────────────────────────────────────────────
+
+第 1 步: 从 Local Dream 项目提取 jar
+  ① 打开 MT 管理器
+  ② 找到你下载的 Local Dream 项目 zip → 长按 → 打开为 ZIP
+  ③ 进入路径: gradle/wrapper/
+  ④ 找到 gradle-wrapper.jar → 长按 → 提取
+  ⑤ 保存到: /sdcard/Download/
+
+第 2 步: 在 Termux 里复制到正确位置
+  cp /sdcard/Download/gradle-wrapper.jar \
+     ~/projects/LocalAIPainter/gradle/wrapper/
+
+第 3 步: 验证
+  ls -la ~/projects/LocalAIPainter/gradle/wrapper/gradle-wrapper.jar
+  → 应该显示 60000+ bytes（不是 0 也不是 22）
+
+第 4 步: 编译
+  cd ~/projects/LocalAIPainter
+  ./gradlew assembleDebug
+
+─────────────────────────────────────────────────────────────────
+🖥️ 电脑端操作 (更简单)
+─────────────────────────────────────────────────────────────────
+
+方法 A: 从 Local Dream 项目复制
+  1. 解压 Local Dream 项目
+  2. 复制 gradle/wrapper/gradle-wrapper.jar
+  3. 粘贴到 LocalAIPainter/gradle/wrapper/ 目录
+
+方法 B: 从任何 Gradle 项目复制
+  任何用 Gradle 构建的 Android 项目都有这个文件
+  路径都是: 项目根目录/gradle/wrapper/gradle-wrapper.jar
+  Gradle 8.x / 9.x 的 wrapper jar 通用，随便哪个都行
+
+方法 C: 从 Gradle 官网下载
+  1. 浏览器打开: https://services.gradle.org/distributions/
+  2. 下载 gradle-9.3.1-bin.zip
+  3. 解压后进入: gradle-9.3.1/lib/plugins/
+  4. 找到 gradle-wrapper-*.jar（可能在 lib/ 下）
+  5. 或者更简单: 解压后运行一次 gradle wrapper --gradle-version 9.3.1
+     它会自动生成正确的 gradle-wrapper.jar
+
+─────────────────────────────────────────────────────────────────
+✅ 放好之后的目录结构
+─────────────────────────────────────────────────────────────────
+
+LocalAIPainter/
+├── gradlew                          ← ✅ 已有
+├── gradlew.bat                      ← ✅ 已有
+├── gradle.properties                ← ✅ 已有
+├── settings.gradle.kts              ← ✅ 已有
+├── build.gradle.kts                 ← ✅ 已有
+├── PHONE_BUILD_GUIDE.md            ← ✅ 手机编译详细指南
+├── install-wrapper-jar.sh           ← ✅ 自动下载脚本
+├── install-neuron-so.sh             ← ✅ NPU .so 安装脚本
+├── build-apk.sh                     ← ✅ 一键编译脚本
+├── app/
+│   ├── build.gradle.kts            ← ✅ 已有
+│   └── src/main/...               ← ✅ 全部 Kotlin/C++/XML
+└── gradle/
+    ├── libs.versions.toml          ← ✅ 已有
+    └── wrapper/
+        ├── gradle-wrapper.properties ← ✅ 已有 (Gradle 9.3.1)
+        └── gradle-wrapper.jar         ← ⚠️ 你放进来
+
+─────────────────────────────────────────────────────────────────
+🚀 快速验证 (放好 jar 后)
+─────────────────────────────────────────────────────────────────
+
+  cd LocalAIPainter
+  ./gradlew --version
+
+  成功输出应该类似:
+  ─────────────────────────────────
+  Gradle 9.3.1
+  ─────────────────────────────────
+  Build time:    2025-01-09
+  Kotlin:        2.0.21
+  Groovy:         4.0.24
+  Ant:            Apache Ant(TM) 1.10.15
+  Launcher JVM:   17.x.x (...)
+  Daemon JVM:     17.x.x (...)
+  ─────────────────────────────────
+
+─────────────────────────────────────────────────────────────────
+📞 有问题看这里
+─────────────────────────────────────────────────────────────────
+
+  PHONE_BUILD_GUIDE.md  → 手机端完整编译教程
+  D8400_README.md       → 天玑 8400 NPU 适配说明
+  README.md             → 项目总览 + 功能矩阵
+  install-wrapper-jar.sh → 自动下载 jar 的脚本（网络通就能用）
+
+═════════════════════════════════════════════════════════════
+记住: 只有 gradle-wrapper.jar 一个文件需要你手动放! 其他的都齐了!
+═════════════════════════════════════════════════════════════

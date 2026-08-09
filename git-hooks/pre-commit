@@ -1,0 +1,112 @@
+#!/bin/bash
+# ============================================================
+#  Local AI Painter v3.0 — Git pre-commit 钩子
+#  功能: 提交前自动检查代码完整性和常见错误
+#  安装: cp git-hooks/pre-commit .git/hooks/pre-commit
+#        chmod +x .git/hooks/pre-commit
+# ============================================================
+
+set -e
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; NC='\033[0m'
+
+echo -e "${BLUE}[pre-commit]${NC} 开始代码检查..."
+
+# 1. 检查 Kotlin 语法（简单括号匹配）
+echo -e "${BLUE}[pre-commit]${NC} 检查 Kotlin 文件括号匹配..."
+ERRORS=0
+while IFS= read -r -d '' f; do
+    OPEN=$(tr -cd '{' < "$f" | wc -c)
+    CLOSE=$(tr -cd '}' < "$f" | wc -c)
+    if [ "$OPEN" -ne "$CLOSE" ]; then
+        echo -e "  ${RED}✗${NC} $f — 大括号不匹配 ({=$OPEN, }=$CLOSE)"
+        ERRORS=$((ERRORS+1))
+    fi
+done < <(find . -name "*.kt" -not -path "./.git/*" -not -path "./build/*" -print0)
+
+if [ $ERRORS -eq 0 ]; then
+    echo -e "  ${GREEN}✓${NC} Kotlin 括号检查通过"
+fi
+
+# 2. 检查 C++ 头文件引用
+echo -e "${BLUE}[pre-commit]${NC} 检查 C++ 头文件..."
+while IFS= read -r -d '' f; do
+    # 检查 #include 的文件是否存在
+    while IFS= read -r inc; do
+        header=$(echo "$inc" | sed 's/#include ["<]\(.*\)[">]/\1/')
+        if [[ "$header" != */* ]]; then
+            # 系统头文件，跳过
+            continue
+        fi
+        if [ ! -f "app/src/main/cpp/$header" ] 2>/dev/null; then
+            # 尝试在 cpp 目录下搜索
+            found=$(find app/src/main/cpp -name "$(basename "$header")" 2>/dev/null | head -1)
+            if [ -z "$found" ]; then
+                echo -e "  ${YELLOW}⚠${NC} $f — 找不到头文件: $header"
+            fi
+        fi
+    done < <(grep '^#include' "$f" 2>/dev/null)
+done < <(find . -name "*.cpp" -o -name "*.h" -not -path "./.git/*" -not -path "./build/*" -print0)
+
+echo -e "  ${GREEN}✓${NC} C++ 头文件检查完成"
+
+# 3. 检查 XML 资源文件有效性
+echo -e "${BLUE}[pre-commit]${NC} 检查 XML 资源文件..."
+while IFS= read -r -d '' f; do
+    if ! head -1 "$f" | grep -q '<?xml'; then
+        echo -e "  ${YELLOW}⚠${NC} $f — 缺少 XML 声明头"
+    fi
+done < <(find . -name "*.xml" -not -path "./.git/*" -not -path "./build/*" -print0)
+echo -e "  ${GREEN}✓${NC} XML 检查完成"
+
+# 4. 检查关键文件是否存在
+echo -e "${BLUE}[pre-commit]${NC} 检查关键文件..."
+KEY_FILES=(
+    "settings.gradle.kts"
+    "build.gradle.kts"
+    "app/build.gradle.kts"
+    "app/src/main/AndroidManifest.xml"
+    "app/src/main/cpp/CMakeLists.txt"
+    "gradlew"
+    "gradlew.bat"
+    "gradle/wrapper/gradle-wrapper.properties"
+)
+
+for f in "${KEY_FILES[@]}"; do
+    if [ ! -f "$f" ]; then
+        echo -e "  ${RED}✗${NC} 关键文件缺失: $f"
+        ERRORS=$((ERRORS+1))
+    fi
+done
+
+if [ $ERRORS -eq 0 ]; then
+    echo -e "  ${GREEN}✓${NC} 所有关键文件就绪"
+fi
+
+# 5. 检查 gradle-wrapper.jar
+if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+    SIZE=$(du -h "gradle/wrapper/gradle-wrapper.jar" | cut -f1)
+    echo -e "  ${GREEN}✓${NC} gradle-wrapper.jar 存在 (${SIZE})"
+else
+    echo -e "  ${YELLOW}⚠${NC} gradle-wrapper.jar 缺失（首次构建前需运行 install-wrapper.sh）"
+fi
+
+# 6. 检查版本号一致性
+echo -e "${BLUE}[pre-commit]${NC} 检查版本号..."
+APP_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+MANIFEST_VERSION=$(grep 'android:versionName' app/src/main/AndroidManifest.xml 2>/dev/null | sed 's/.*"\(.*\)".*/\1/' || echo "")
+if [ -n "$MANIFEST_VERSION" ] && [ "$APP_VERSION" != "$MANIFEST_VERSION" ]; then
+    echo -e "  ${YELLOW}⚠${NC} 版本号不一致: build.gradle.kts=$APP_VERSION, Manifest=$MANIFEST_VERSION"
+else
+    echo -e "  ${GREEN}✓${NC} 版本号一致: ${APP_VERSION}"
+fi
+
+echo ""
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}发现 ${ERRORS} 个错误，提交被阻止${NC}"
+    echo -e "修复后重新提交，或使用 ${YELLOW}git commit --no-verify${NC} 跳过检查"
+    exit 1
+else
+    echo -e "${GREEN}✓ 所有检查通过，允许提交${NC}"
+fi
