@@ -46,7 +46,7 @@ espresso = "3.6.1"
 composeTest = "1.7.6"
 
 # Build
-kotlinGradlePlugin = "2.1.0"
+kotlinGradlePlugin = "2.0.21"
 
 [libraries]
 # Android Core
