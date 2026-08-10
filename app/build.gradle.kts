@@ -19,7 +19,6 @@ android {
         versionCode = 10
         versionName = "3.7.0"
 
-        // 仅保留 arm64-v8a，砍掉 armeabi-v7a 节省 ~15MB
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
@@ -30,7 +29,6 @@ android {
             useSupportLibrary = true
         }
 
-        // CMake C++ 引擎
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17 -O3 -flto -fopenmp"
@@ -39,10 +37,75 @@ android {
         }
 
         ndk {
-            // Vulkan + OpenCL + NNAPI 支持
             ldLibs?.addAll(listOf("vulkan", "OpenCL", "neuralnetworks"))
         }
+
     }
+
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
+
+        applicationId = "com.localaipainter"
+
+        minSdk = libs.versions.minSdk.get().toInt()
+
+        targetSdk = libs.versions.targetSdk.get().toInt()
+
+        versionCode = 10
+
+        versionName = "3.7.0"
+
+
+
+        // 仅保留 arm64-v8a，砍掉 armeabi-v7a 节省 ~15MB
+
+        ndk {
+
+            abiFilters += listOf("arm64-v8a")
+
+        }
+
+
+
+        multiDexEnabled = true
+
+
+
+        vectorDrawables {
+
+            useSupportLibrary = true
+
+        }
+
+
+
+        // CMake C++ 引擎
+
+        externalNativeBuild {
+
+            cmake {
+
+                cppFlags += "-std=c++17 -O3 -flto -fopenmp"
+
+                arguments += "-DANDROID_STL=c++_shared"
+
+            }
+
+        }
+
+
+
+        ndk {
+
+            // Vulkan + OpenCL + NNAPI 支持
+
+            ldLibs?.addAll(listOf("vulkan", "OpenCL", "neuralnetworks"))
+
+        }
+
+    }
+
 
     buildTypes {
         debug {
